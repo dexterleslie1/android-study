@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 3.4.1)
 # Gradle automatically packages shared libraries with your APK.
 
 include_directories(src/main/cpp/include)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFIXED_POINT -DUSE_KISS_FFT -DEXPORT=\"\" -UHAVE_CONFIG_H")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLOATING_POINT -DUSE_SMALLFT -DEXPORT=\"\" -UHAVE_CONFIG_H")
 add_library( # Sets the name of the library.
              speexjni
 

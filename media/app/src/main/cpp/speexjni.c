@@ -7,8 +7,8 @@ SpeexPreprocessState *preprocessState=NULL;
 
 JNIEXPORT void JNICALL
 Java_com_future_android_study_media_SpeexJNI_init(JNIEnv *env,jobject jobj,jint sampleRateInHz){
-    int frameSize=sampleRateInHz*20/1000;
-    int filterLength=sampleRateInHz*128/1000;
+    int frameSize=1000;
+    int filterLength=sampleRateInHz*250/1000;
     echo_state=speex_echo_state_init(frameSize, filterLength);
     speex_echo_ctl(echo_state, SPEEX_ECHO_SET_SAMPLING_RATE, &sampleRateInHz);
     preprocessState=speex_preprocess_state_init(frameSize, sampleRateInHz);
@@ -17,22 +17,32 @@ Java_com_future_android_study_media_SpeexJNI_init(JNIEnv *env,jobject jobj,jint 
     speex_preprocess_ctl(preprocessState, SPEEX_PREPROCESS_SET_DENOISE ,echo_state);
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT jshortArray JNICALL
 Java_com_future_android_study_media_SpeexJNI_cancellation(
-                                        JNIEnv *env,
-                                        jobject jobj,
-                                        jshortArray input_frame,
-                                        jshortArray echo_frame,
-                                        jshortArray output_frame){
-    jboolean iscopy1,iscopy2,iscopy3;
-    jshort *rec=(*env)->GetShortArrayElements(env,input_frame,&iscopy1);
-    jshort *play=(*env)->GetShortArrayElements(env,echo_frame,&iscopy2);
-    jshort *out=(*env)->GetShortArrayElements(env,output_frame,&iscopy3);
-    speex_echo_cancellation(echo_state, rec, play, out);
-    speex_preprocess_run(preprocessState, out);
-    (*env)->ReleaseShortArrayElements(env,input_frame,rec,0);
-    (*env)->ReleaseShortArrayElements(env,echo_frame,play,0);
-    (*env)->ReleaseShortArrayElements(env,output_frame,out,0);
+        JNIEnv *env, jobject jObj, jshortArray input_frame, jshortArray echo_frame){
+
+    //create native shorts from java shorts
+    jshort *native_input_frame = (*env)->GetShortArrayElements(env, input_frame, NULL);
+    jshort *native_echo_frame = (*env)->GetShortArrayElements(env, echo_frame, NULL);
+
+    //allocate memory for output data
+    jint length = (*env)->GetArrayLength(env, input_frame);
+    jshortArray temp = (*env)->NewShortArray(env, length);
+    jshort *native_output_frame = (*env)->GetShortArrayElements(env, temp, 0);
+
+    //call echo cancellation
+    speex_echo_cancellation(echo_state, native_input_frame, native_echo_frame, native_output_frame);
+    speex_preprocess_run(preprocessState, native_output_frame);
+
+    //convert native output to java layer output
+    jshortArray output_shorts = (*env)->NewShortArray(env, length);
+    (*env)->SetShortArrayRegion(env, output_shorts, 0, length, native_output_frame);
+
+    //cleanup and return
+    (*env)->ReleaseShortArrayElements(env, input_frame, native_input_frame, 0);
+    (*env)->ReleaseShortArrayElements(env, echo_frame, native_echo_frame, 0);
+    (*env)->ReleaseShortArrayElements(env, temp, native_output_frame, 0);
+    return output_shorts;
 }
 
 JNIEXPORT void JNICALL

@@ -8,4 +8,3 @@ typedef unsigned int spx_uint32_t;
 
 #endif
 
-

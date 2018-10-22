@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             final ReentrantLock lock=new ReentrantLock(true);
-            int sampleRateInHz=44100;
+            int sampleRateInHz=8000;
             int channelConfig= AudioFormat.CHANNEL_IN_MONO;
             int audioFormat=AudioFormat.ENCODING_PCM_16BIT;
 
@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
 //                sampleRateInHz,
 //                channelConfig,
 //                audioFormat);
-            final int bufferSize=sampleRateInHz*20/1000*2;
+            final int bufferSize=2000;
             if(bufferSize<0){
                 String error=String.format("AudioRecord with sampleRate=%s,channelConfig=%s,audioFormat=%s not supported and getMinBufferSize return value is %s",
                         sampleRateInHz,channelConfig,audioFormat,bufferSize);
@@ -116,12 +116,14 @@ public class MainActivity extends AppCompatActivity {
                                     }
 
                                     if(datas.length!=0){
+//                                    short []shortData=new short[datas.length/2];
+//                                    ByteBuffer.wrap(datas, 0, datas.length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortData);
                                         if(lastFrame==null){
                                             lastFrame=datas;
                                         }
-                                        short []aecDatas=new short[bufferSize/2];
+                                        short []aecDatas=null;
                                         if(lastFrame!=null) {
-                                            SpeexJNI.cancellation(datas, lastFrame, aecDatas);
+                                            aecDatas=SpeexJNI.cancellation(datas, lastFrame);
 //                                        aecDatas=datas;
                                         }else{
                                             aecDatas=datas;
@@ -153,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-                Thread.sleep(10000);
+                Thread.sleep(30000);
             }finally {
                 try {
                     lock.lock();

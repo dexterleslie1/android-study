@@ -16,6 +16,8 @@ import android.util.Log;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -177,7 +179,7 @@ public class AudioTests {
 //                sampleRateInHz,
 //                channelConfig,
 //                audioFormat);
-        final int bufferSize=sampleRateInHz*20/1000*2;
+        final int bufferSize=1500;
         if(bufferSize<0){
             String error=String.format("AudioRecord with sampleRate=%s,channelConfig=%s,audioFormat=%s not supported and getMinBufferSize return value is %s",
                     sampleRateInHz,channelConfig,audioFormat,bufferSize);
@@ -243,12 +245,14 @@ public class AudioTests {
                                 }
 
                                 if(datas.length!=0){
+//                                    short []shortData=new short[datas.length/2];
+//                                    ByteBuffer.wrap(datas, 0, datas.length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortData);
                                     if(lastFrame==null){
                                         lastFrame=datas;
                                     }
-                                    short []aecDatas=new short[bufferSize/2];
+                                    short []aecDatas=null;
                                     if(lastFrame!=null) {
-                                        SpeexJNI.cancellation(datas, lastFrame, aecDatas);
+                                        aecDatas=SpeexJNI.cancellation(datas, lastFrame);
 //                                        aecDatas=datas;
                                     }else{
                                         aecDatas=datas;

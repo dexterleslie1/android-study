@@ -5,6 +5,9 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.media.audiofx.AcousticEchoCanceler;
+import android.media.audiofx.AutomaticGainControl;
+import android.media.audiofx.NoiseSuppressor;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
@@ -36,6 +39,9 @@ public class UDP {
     private AudioTrack audioTrack;
     private String receiverIp;
     private int receiverPort;
+    private AcousticEchoCanceler acousticEchoCanceler;
+    private AutomaticGainControl automaticGainControl;
+    private NoiseSuppressor noiseSuppressor;
 
     /**
      *
@@ -58,11 +64,11 @@ public class UDP {
         int channelConfig= AudioFormat.CHANNEL_IN_MONO;
         int audioFormat=AudioFormat.ENCODING_PCM_16BIT;
 
-//        final int bufferSize = AudioRecord.getMinBufferSize(
-//                sampleRateInHz,
-//                channelConfig,
-//                audioFormat);
-        final int bufferSize=sampleRateInHz*20/1000*2;
+        final int bufferSize = AudioRecord.getMinBufferSize(
+                sampleRateInHz,
+                channelConfig,
+                audioFormat);
+//        final int bufferSize=sampleRateInHz*20/1000*2;
         if(bufferSize<0){
             String error=String.format("AudioRecord with sampleRate=%s,channelConfig=%s,audioFormat=%s not supported and getMinBufferSize return value is %s",
                     sampleRateInHz,channelConfig,audioFormat,bufferSize);
@@ -85,15 +91,48 @@ public class UDP {
         if (recorder.getState() != AudioRecord.STATE_INITIALIZED) {
             throw new Exception("AudioRecord未正确初始化，可能是由于权限原因");
         }
+
+        // 检查设备是否支持android回声消除特性
+        boolean needAudioSession=false;
+        int audioSessionId=this.recorder.getAudioSessionId();
+        boolean isAecAvailable= AcousticEchoCanceler.isAvailable();
+        if(isAecAvailable){
+            acousticEchoCanceler=AcousticEchoCanceler.create(audioSessionId);
+            acousticEchoCanceler.setEnabled(true);
+            needAudioSession=true;
+        }
+        boolean isAgcAvailable = AutomaticGainControl.isAvailable();
+        if(isAgcAvailable){
+            automaticGainControl=AutomaticGainControl.create(audioSessionId);
+            automaticGainControl.setEnabled(true);
+            needAudioSession=true;
+        }
+        boolean isNSAvailable= NoiseSuppressor.isAvailable();
+        if(isNSAvailable){
+            noiseSuppressor=NoiseSuppressor.create(audioSessionId);
+            noiseSuppressor.setEnabled(true);
+            needAudioSession=true;
+        }
+
         recorder.startRecording();
 
-        audioTrack = new AudioTrack(
-                AudioManager.STREAM_MUSIC,
-                sampleRateInHz,
-                AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                audioTrackBufferSize,
-                AudioTrack.MODE_STREAM);
+        if(needAudioSession){
+            audioTrack = new AudioTrack(
+                    AudioManager.STREAM_MUSIC,
+                    sampleRateInHz,
+                    AudioFormat.CHANNEL_OUT_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    audioTrackBufferSize,
+                    AudioTrack.MODE_STREAM,audioSessionId);
+        }else {
+            audioTrack = new AudioTrack(
+                    AudioManager.STREAM_MUSIC,
+                    sampleRateInHz,
+                    AudioFormat.CHANNEL_OUT_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    audioTrackBufferSize,
+                    AudioTrack.MODE_STREAM);
+        }
 
         final AudioRecord recorderInternalUsage=recorder;
         final AudioTrack audioTrackInternalUsage=audioTrack;
@@ -135,8 +174,9 @@ public class UDP {
                             }
 
                             if(datas.length!=0){
-                                short []aecDatas=new short[bufferSize/2];
-                                SpeexJNI.cancellation(datas, echoData, aecDatas);
+//                                short []aecDatas=new short[bufferSize/2];
+//                                SpeexJNI.cancellation(datas, echoData, aecDatas);
+                                short []aecDatas=datas;
                                 byteBuffer=ByteBuffer.allocate(2*aecDatas.length).order(ByteOrder.LITTLE_ENDIAN);
                                 for(int i=0;i<aecDatas.length;i++){
                                     byteBuffer.putShort(aecDatas[i]);
@@ -210,6 +250,22 @@ public class UDP {
             if (this.handlerThreadSend != null) {
                 this.handlerThreadSend.quit();
                 this.handlerThreadSend = null;
+            }
+
+            if(this.acousticEchoCanceler!=null){
+                this.acousticEchoCanceler.setEnabled(false);
+                this.acousticEchoCanceler.release();
+                this.acousticEchoCanceler=null;
+            }
+            if(this.automaticGainControl!=null){
+                this.automaticGainControl.setEnabled(false);
+                this.automaticGainControl.release();
+                this.automaticGainControl=null;
+            }
+            if(this.noiseSuppressor!=null){
+                this.noiseSuppressor.setEnabled(true);
+                this.noiseSuppressor.release();
+                this.noiseSuppressor=null;
             }
 
             if (null != recorder) {

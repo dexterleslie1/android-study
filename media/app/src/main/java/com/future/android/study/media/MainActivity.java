@@ -63,6 +63,13 @@ public class MainActivity extends AppCompatActivity {
 
         final String ip=Utils.getIp(this);
         ((TextView)findViewById(R.id.deviceIP)).setText(ip);
+
+//        Tester tester=new Tester();
+//        try {
+//            tester.testEcho();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
     }
 
     private void toggleButtonState(){

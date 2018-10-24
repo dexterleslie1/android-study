@@ -16,8 +16,6 @@ import android.util.Log;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -36,7 +34,7 @@ public class AudioTests {
     @Test
     public void testEcho() throws Exception {
         final ReentrantLock lock=new ReentrantLock(true);
-        int sampleRateInHz=44100;
+        int sampleRateInHz=8000;
         int channelConfig= AudioFormat.CHANNEL_IN_MONO;
         int audioFormat=AudioFormat.ENCODING_PCM_16BIT;
 
@@ -171,7 +169,7 @@ public class AudioTests {
     @Test
     public void testAEC() throws Exception {
         final ReentrantLock lock=new ReentrantLock(true);
-        int sampleRateInHz=44100;
+        int sampleRateInHz=8000;
         int channelConfig= AudioFormat.CHANNEL_IN_MONO;
         int audioFormat=AudioFormat.ENCODING_PCM_16BIT;
 
@@ -179,17 +177,17 @@ public class AudioTests {
 //                sampleRateInHz,
 //                channelConfig,
 //                audioFormat);
-        final int bufferSize=1500;
+        final int bufferSize=sampleRateInHz*20/1000*2;
         if(bufferSize<0){
             String error=String.format("AudioRecord with sampleRate=%s,channelConfig=%s,audioFormat=%s not supported and getMinBufferSize return value is %s",
                     sampleRateInHz,channelConfig,audioFormat,bufferSize);
             throw new Exception(error);
         }
 
-//        int audioTrackBufferSize = AudioTrack.getMinBufferSize(sampleRateInHz,
-//                AudioFormat.CHANNEL_OUT_MONO,
-//                AudioFormat.ENCODING_PCM_16BIT);
-        int audioTrackBufferSize=bufferSize;
+        int audioTrackBufferSize = AudioTrack.getMinBufferSize(sampleRateInHz,
+                AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT);
+//        int audioTrackBufferSize=bufferSize;
 
         AudioRecord recorder = null;
         HandlerThread handlerThread=null;
@@ -235,6 +233,10 @@ public class AudioTests {
                                 break;
                             }
 
+                            if(lastFrame!=null&&lastFrame.length!=0){
+                                audioTrackInternalUsage.write(lastFrame, 0, lastFrame.length);
+                            }
+
                             short []datas=new short[bufferSize/2];
                             int result = recorderInternalUsage.read(datas, 0, datas.length);
                             if (result >= 0) {
@@ -245,20 +247,13 @@ public class AudioTests {
                                 }
 
                                 if(datas.length!=0){
-//                                    short []shortData=new short[datas.length/2];
-//                                    ByteBuffer.wrap(datas, 0, datas.length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortData);
-                                    if(lastFrame==null){
-                                        lastFrame=datas;
-                                    }
-                                    short []aecDatas=null;
-                                    if(lastFrame!=null) {
-                                        aecDatas=SpeexJNI.cancellation(datas, lastFrame);
+//                                    short []aecDatas=new short[bufferSize/2];
+//                                    if(lastFrame!=null) {
+//                                        SpeexJNI.cancellation(datas, lastFrame, aecDatas);
+//                                    }else{
 //                                        aecDatas=datas;
-                                    }else{
-                                        aecDatas=datas;
-                                    }
-                                    audioTrackInternalUsage.write(aecDatas, 0, aecDatas.length);
-                                    lastFrame=aecDatas;
+//                                    }
+                                    lastFrame=datas;
                                 }
                             } else {
                                 String error = null;

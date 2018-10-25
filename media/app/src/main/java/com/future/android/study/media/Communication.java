@@ -12,10 +12,11 @@ public class Communication {
      *
      * @param receiverIp
      * @param receiverPort
+     * @param userId
      * @throws Exception
      */
-    public void start(final String receiverIp, final int receiverPort) throws Exception {
-        this.udp=new UDP(8080,receiverIp,receiverPort);
+    public void start(final String receiverIp, final int receiverPort,String userId) throws Exception {
+        this.udp=new UDP(8080,receiverIp,receiverPort,userId);
         this.udp.start();
     }
 

@@ -1,5 +1,6 @@
 package com.future.android.study.media;
 
+import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -12,6 +13,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
+import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -366,5 +368,63 @@ public class Tester {
                 lock.unlock();
             }
         }
+    }
+
+    public boolean wantStop = false;
+    static final int frequency = 8000;
+    static final int audioEncoding = AudioFormat.ENCODING_PCM_16BIT;
+//    static final int audioChanel = AudioFormat.CHANNEL_CONFIGURATION_MONO;
+    LinkedList<short[]> listAudio = new LinkedList<short[]>();
+    public void test1(Context context){
+        wantStop = false;
+        int bufferSize = android.media.AudioTrack.getMinBufferSize(8000, AudioFormat.CHANNEL_OUT_MONO, audioEncoding);
+        int bufferSizeRec = android.media.AudioRecord.getMinBufferSize(8000, AudioFormat.CHANNEL_IN_MONO, audioEncoding);
+        final AudioRecord audioRecord = new AudioRecord(
+                MediaRecorder.AudioSource.VOICE_COMMUNICATION , frequency, AudioFormat.CHANNEL_IN_MONO,
+                audioEncoding,	bufferSizeRec );
+
+        audioRecord.startRecording();
+        final AudioTrack audioPlay = new AudioTrack(AudioManager.STREAM_VOICE_CALL, 8000, AudioFormat.CHANNEL_OUT_MONO, audioEncoding, bufferSize,
+                AudioTrack.MODE_STREAM);
+
+        AcousticEchoCanceler aec = AcousticEchoCanceler.create(audioRecord.getAudioSessionId());
+        if (aec != null) aec.setEnabled(true);
+
+
+
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                boolean playStart = false;
+                short data [] = new short[320];
+                int	bufferRead;
+                listAudio = new LinkedList<short[]>();
+                while (!wantStop)
+                {
+                    bufferRead = audioRecord.read(data, 0, data.length);
+                    short out [] = new short[bufferRead];
+                    System.arraycopy(data, 0, out, 0, bufferRead);
+                    listAudio.add(out);
+                    if (playStart)
+                    {
+                        data = listAudio.removeFirst();
+                        audioPlay.write(data, 0, data.length);
+                    }
+                    else
+                    {
+                        if (listAudio.size() > 10)
+                        {
+                            playStart = true;
+                            audioPlay.play();
+                        }
+                    }
+                }
+                audioRecord.stop();
+                audioPlay.stop();
+            }
+        });
+        thread.start();
+
+        wantStop=true;
     }
 }

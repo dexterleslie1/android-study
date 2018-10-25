@@ -8,7 +8,7 @@ SpeexPreprocessState *preprocessState=NULL;
 JNIEXPORT void JNICALL
 Java_com_future_android_study_media_SpeexJNI_init(JNIEnv *env,jobject jobj,jint sampleRateInHz){
     int frameSize=sampleRateInHz*20/1000;
-    int filterLength=sampleRateInHz*512/1000;
+    int filterLength=sampleRateInHz*100/1000;
     echo_state=speex_echo_state_init(frameSize, filterLength);
     speex_echo_ctl(echo_state, SPEEX_ECHO_SET_SAMPLING_RATE, &sampleRateInHz);
     preprocessState=speex_preprocess_state_init(frameSize, sampleRateInHz);

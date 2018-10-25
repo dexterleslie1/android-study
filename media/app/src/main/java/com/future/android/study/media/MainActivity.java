@@ -1,6 +1,9 @@
 package com.future.android.study.media;
 
+import android.content.Context;
+import android.media.AudioManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -46,7 +49,9 @@ public class MainActivity extends AppCompatActivity {
                 String receiverIp=((EditText)findViewById(R.id.receiverIp)).getText().toString();
                 String receiverPort=((EditText)findViewById(R.id.receiverPort)).getText().toString();
                 try {
-                    communication.start(receiverIp,Integer.parseInt(receiverPort));
+                    String androidId = Settings.Secure.getString(getContentResolver(),
+                            Settings.Secure.ANDROID_ID);
+                    communication.start(receiverIp,Integer.parseInt(receiverPort),androidId);
                 } catch (Exception e) {
                     Log.e(TAG,e.getMessage(),e);
                 }
@@ -60,13 +65,28 @@ public class MainActivity extends AppCompatActivity {
                 communication.stop();
             }
         });
+        final Button buttonSpeakerToggle=findViewById(R.id.buttonSpeakerToggle);
+        buttonSpeakerToggle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AudioManager audioManager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
+                String text=buttonSpeakerToggle.getText().toString();
+                if("开免提".equals(text)){
+                    audioManager.setSpeakerphoneOn(true);
+                    buttonSpeakerToggle.setText("关免提");
+                }else{
+                    audioManager.setSpeakerphoneOn(false);
+                    buttonSpeakerToggle.setText("开免提");
+                }
+            }
+        });
 
         final String ip=Utils.getIp(this);
         ((TextView)findViewById(R.id.deviceIP)).setText(ip);
 
 //        Tester tester=new Tester();
 //        try {
-//            tester.testEcho();
+//            tester.test1(this);
 //        } catch (Exception e) {
 //            e.printStackTrace();
 //        }

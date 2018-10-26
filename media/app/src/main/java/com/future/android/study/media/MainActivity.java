@@ -86,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
 //        Tester tester=new Tester();
 //        try {
-//            tester.test1(this);
+//            tester.testAec();
 //        } catch (Exception e) {
 //            e.printStackTrace();
 //        }

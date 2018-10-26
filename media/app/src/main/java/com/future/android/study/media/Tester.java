@@ -229,7 +229,8 @@ public class Tester {
 //                sampleRateInHz,
 //                channelConfig,
 //                audioFormat);
-        final int bufferSize=sampleRateInHz*20/1000*2;
+        int samples=60;
+        final int bufferSize=sampleRateInHz*samples/1000*2;
         if(bufferSize<0){
             String error=String.format("AudioRecord with sampleRate=%s,channelConfig=%s,audioFormat=%s not supported and getMinBufferSize return value is %s",
                     sampleRateInHz,channelConfig,audioFormat,bufferSize);
@@ -246,14 +247,14 @@ public class Tester {
         Handler handler=null;
         AudioTrack audioTrack=null;
         try {
-            SpeexJNI.init(sampleRateInHz);
+            SpeexJNI.init(sampleRateInHz*samples/1000,sampleRateInHz);
 
             handlerThread=new HandlerThread("thread-audio-testing-echo");
             handlerThread.start();
             handler=new Handler(handlerThread.getLooper());
 
             recorder=new AudioRecord(
-                    MediaRecorder.AudioSource.MIC,
+                    MediaRecorder.AudioSource.VOICE_COMMUNICATION,
                     sampleRateInHz,
                     channelConfig,
                     audioFormat,
@@ -299,12 +300,11 @@ public class Tester {
                                 }
 
                                 if(datas.length!=0){
-//                                    short []aecDatas=new short[bufferSize/2];
-//                                    if(lastFrame!=null) {
-//                                        SpeexJNI.cancellation(datas, lastFrame, aecDatas);
-//                                    }else{
-//                                        aecDatas=datas;
-//                                    }
+                                    if(lastFrame!=null) {
+                                        short []aecDatas=new short[datas.length];
+                                        SpeexJNI.cancellation(datas, lastFrame, aecDatas);
+                                        datas=aecDatas;
+                                    }
                                     lastFrame=datas;
                                 }
                             } else {
@@ -331,7 +331,7 @@ public class Tester {
                 }
             });
 
-            System.out.println("placeholder");
+            Thread.sleep(30000);
         }finally {
             try {
                 lock.lock();
@@ -384,12 +384,11 @@ public class Tester {
                 audioEncoding,	bufferSizeRec );
 
         audioRecord.startRecording();
-        final AudioTrack audioPlay = new AudioTrack(AudioManager.STREAM_VOICE_CALL, 8000, AudioFormat.CHANNEL_OUT_MONO, audioEncoding, bufferSize,
+        final AudioTrack audioPlay = new AudioTrack(AudioManager.STREAM_MUSIC, 8000, AudioFormat.CHANNEL_OUT_MONO, audioEncoding, bufferSize,
                 AudioTrack.MODE_STREAM);
 
         AcousticEchoCanceler aec = AcousticEchoCanceler.create(audioRecord.getAudioSessionId());
         if (aec != null) aec.setEnabled(true);
-
 
 
         Thread thread = new Thread(new Runnable() {

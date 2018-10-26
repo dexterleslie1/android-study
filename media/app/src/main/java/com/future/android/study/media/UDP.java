@@ -14,6 +14,7 @@ import android.os.HandlerThread;
 import android.util.Base64;
 import android.util.Log;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -23,6 +24,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import io.reactivex.functions.Consumer;
@@ -50,6 +53,9 @@ public class UDP {
     private AutomaticGainControl automaticGainControl;
     private NoiseSuppressor noiseSuppressor;
     private NaikSoftwareStompClient client;
+    private boolean isAecAvailable=false;
+    private AudioEncoder encoder;
+    private AudioDecoder decoder;
 
     /**
      *
@@ -77,11 +83,17 @@ public class UDP {
         int channelOutConfig=AudioFormat.CHANNEL_OUT_MONO;
         int audioFormat=AudioFormat.ENCODING_PCM_16BIT;
 
+        this.encoder=new MediaCodecAudioEncoder(sampleRateInHz);
+        this.encoder.start();
+        this.decoder=new MediaCodecAudioDecoder(sampleRateInHz);
+        this.decoder.start();
+
 //        final int bufferSize = AudioRecord.getMinBufferSize(
 //                sampleRateInHz,
 //                channelInConfig,
 //                audioFormat);
-        final int bufferSize=sampleRateInHz*20/1000*2;
+        int samples=100;
+        final int bufferSize=sampleRateInHz*samples/1000*2;
         if(bufferSize<0){
             String error=String.format("AudioRecord with sampleRate=%s,channelConfig=%s,audioFormat=%s not supported and getMinBufferSize return value is %s",
                     sampleRateInHz,channelInConfig,audioFormat,bufferSize);
@@ -93,7 +105,7 @@ public class UDP {
                 audioFormat);
 //        int audioTrackBufferSize=bufferSize;
 
-        SpeexJNI.init(sampleRateInHz);
+        SpeexJNI.init(sampleRateInHz*samples/1000,sampleRateInHz);
 
         recorder=new AudioRecord(
                 MediaRecorder.AudioSource.VOICE_COMMUNICATION,
@@ -108,7 +120,7 @@ public class UDP {
         // 检查设备是否支持android回声消除特性
         boolean needAudioSession=false;
         int audioSessionId=this.recorder.getAudioSessionId();
-        boolean isAecAvailable= AcousticEchoCanceler.isAvailable();
+        isAecAvailable= AcousticEchoCanceler.isAvailable();
         if(isAecAvailable){
             acousticEchoCanceler=AcousticEchoCanceler.create(audioSessionId);
             acousticEchoCanceler.setEnabled(true);
@@ -131,7 +143,7 @@ public class UDP {
 
         if(needAudioSession){
             audioTrack = new AudioTrack(
-                    AudioManager.STREAM_MUSIC,
+                    AudioManager.STREAM_VOICE_CALL,
                     sampleRateInHz,
                     channelOutConfig,
                     audioFormat,
@@ -139,7 +151,7 @@ public class UDP {
                     AudioTrack.MODE_STREAM,audioSessionId);
         }else {
             audioTrack = new AudioTrack(
-                    AudioManager.STREAM_MUSIC,
+                    AudioManager.STREAM_VOICE_CALL,
                     sampleRateInHz,
                     channelOutConfig,
                     audioFormat,
@@ -244,15 +256,35 @@ public class UDP {
             public void accept(StompMessage stompMessage) throws Exception {
                 String payload=stompMessage.getPayload();
                 byte [] data=Base64.decode(payload,Base64.DEFAULT);
-                if(data==null||data.length==0){
-                    data=new byte[]{0,0};
-                }
-                Log.d(TAG,"接收到数据长度："+data.length);
 
-                ByteBuffer byteBuffer=ByteBuffer.wrap(data,0,data.length).order(ByteOrder.LITTLE_ENDIAN);
-                short []echoData=new short[data.length/2];
-                byteBuffer.asShortBuffer().get(echoData);
-                audioTrackInternalUsage.write(echoData,0,echoData.length);
+//                // Decorder支持
+//                ByteBuffer byteBuffer=ByteBuffer.allocate(data.length).order(ByteOrder.LITTLE_ENDIAN);
+//                byteBuffer.put(data);
+//                byteBuffer.rewind();
+//                while(byteBuffer.hasRemaining()) {
+//                    int dataLength=byteBuffer.getInt();
+//                    if (dataLength == 2) {
+//                        byte []bytesTemp = new byte[dataLength];
+//                        byteBuffer.get(bytesTemp);
+//                        ((MediaCodecAudioDecoder) decoder).configCodecSpecificData(bytesTemp);
+//                        continue;
+//                    }
+//                    if (dataLength != 0 && dataLength != 4) {
+//                        byte []audioData = new byte[dataLength];
+//                        byteBuffer.get(audioData);
+//                        Log.d(TAG, "接收到数据长度：" + audioData.length);
+//
+//                        Object[] objectTemp = decoder.decode(new Object[]{audioData});
+//                        if (objectTemp != null && objectTemp.length != 0) {
+//                            for (int i = 0; i < objectTemp.length; i++) {
+//                                audioData = (byte[]) objectTemp[i];
+//                                audioTrackInternalUsage.write(audioData, 0, audioData.length);
+//                            }
+//                        }
+//                    }
+//                }
+
+                audioTrackInternalUsage.write(data, 0, data.length);
 
                 short []datas=new short[bufferSize/2];
                 int result = recorderInternalUsage.read(datas, 0, datas.length);
@@ -263,16 +295,52 @@ public class UDP {
                         datas=new short[]{0,0};
                     }
 
-                    if(datas.length!=0){
-                        short []aecDatas=new short[bufferSize/2];
-                        SpeexJNI.cancellation(datas, echoData, aecDatas);
-//                      short []aecDatas=datas;
-                        byteBuffer=ByteBuffer.allocate(2*aecDatas.length).order(ByteOrder.LITTLE_ENDIAN);
+                    if(datas.length!=0) {
+                        short[] aecDatas = null;
+//                        if (!isAecAvailable) {
+//                            aecDatas = new short[datas.length];
+//                            SpeexJNI.cancellation(datas, echoData, aecDatas);
+//                        } else {
+                            aecDatas = datas;
+//                        }
+
+                        ByteBuffer byteBuffer=ByteBuffer.allocate(2*aecDatas.length).order(ByteOrder.LITTLE_ENDIAN);
                         for(int i=0;i<aecDatas.length;i++){
                             byteBuffer.putShort(aecDatas[i]);
                         }
+                        byte[] bytes=byteBuffer.array();
 
-                        String voiceData=Base64.encodeToString(byteBuffer.array(),Base64.DEFAULT);
+//                        // Encoder支持
+//                        Object []objectTemp=encoder.encode(new Object[]{bytes});
+//                        if(objectTemp!=null&&objectTemp.length!=0) {
+//                            List<byte[]> listBytes=new ArrayList<>();
+//                            int allocateTotalBytes=0;
+//                            for(int i=0;i<objectTemp.length;i++) {
+//                                bytes = (byte[]) objectTemp[i];
+//                                if (bytes.length != 2) {
+//                                    byte[] bytesTemp = new byte[bytes.length + 7];
+//                                    System.arraycopy(bytes, 0, bytesTemp, 7, bytes.length);
+//                                    bytes = bytesTemp;
+//                                    AACAdtsUtils.addADTStoPacket(encoder.getSampleRateInHz(), bytes, bytes.length);
+//                                }
+//                                listBytes.add(bytes);
+//                                allocateTotalBytes=allocateTotalBytes+bytes.length+4;
+//                            }
+//                            byteBuffer=ByteBuffer.allocate(allocateTotalBytes).order(ByteOrder.LITTLE_ENDIAN);
+//                            for(int i=0;i<listBytes.size();i++){
+//                                byteBuffer.putInt(listBytes.get(i).length);
+//                                byteBuffer.put(listBytes.get(i));
+//                            }
+//                            bytes=byteBuffer.array();
+//                            String voiceData=Base64.encodeToString(bytes,Base64.DEFAULT);
+//                            JSONObject object=new JSONObject();
+//                            object.put("voiceData",voiceData);
+//                            send("/app/sendVoiceData",object);
+//                        }else{
+//                            sendEmptyVoiceFrame(4);
+//                        }
+
+                        String voiceData=Base64.encodeToString(bytes,Base64.DEFAULT);
                         JSONObject object=new JSONObject();
                         object.put("voiceData",voiceData);
                         send("/app/sendVoiceData",object);
@@ -297,8 +365,15 @@ public class UDP {
             }
         });
 
+        this.sendEmptyVoiceFrame(4);
+    }
+
+    private void sendEmptyVoiceFrame(int bufferSize) throws JSONException, NotConnectedNetworkException {
         JSONObject object=new JSONObject();
-        object.put("voiceData",Base64.encodeToString(new byte[]{0,0},Base64.DEFAULT));
+        ByteBuffer byteBuffer=ByteBuffer.allocate(4+bufferSize).order(ByteOrder.LITTLE_ENDIAN);
+        byteBuffer.putInt(bufferSize);
+        byteBuffer.put(new byte[bufferSize]);
+        object.put("voiceData",Base64.encodeToString(byteBuffer.array(),Base64.DEFAULT));
         this.send("/app/sendVoiceData",object);
     }
 
@@ -313,6 +388,15 @@ public class UDP {
 
             lock.lock();
             isStop = true;
+
+            if(this.encoder!=null){
+                this.encoder.stop();
+                this.encoder=null;
+            }
+            if(this.decoder!=null){
+                this.decoder.stop();
+                this.decoder=null;
+            }
 
             SpeexJNI.destroy();
 

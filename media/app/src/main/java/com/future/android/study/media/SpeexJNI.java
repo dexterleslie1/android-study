@@ -10,9 +10,10 @@ public class SpeexJNI {
 
     /**
      *
+     * @param frameSize
      * @param sampleRateInHz
      */
-    public static native void init(int sampleRateInHz);
+    public static native void init(int frameSize,int sampleRateInHz);
 
     /**
      *

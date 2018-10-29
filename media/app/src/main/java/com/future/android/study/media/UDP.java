@@ -92,7 +92,7 @@ public class UDP {
 //                sampleRateInHz,
 //                channelInConfig,
 //                audioFormat);
-        int samples=100;
+        int samples=512;
         final int bufferSize=sampleRateInHz*samples/1000*2;
         if(bufferSize<0){
             String error=String.format("AudioRecord with sampleRate=%s,channelConfig=%s,audioFormat=%s not supported and getMinBufferSize return value is %s",

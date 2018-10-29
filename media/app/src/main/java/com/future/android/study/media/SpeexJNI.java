@@ -27,4 +27,9 @@ public class SpeexJNI {
      *
      */
     public static native void destroy();
+
+    public static native void open(int quality);
+    public static native int encode(short []data,byte []encodedData);
+    public static native int decode(byte []encodedData,short []decodedData,int encodedSize);
+    public static native void  close();
 }

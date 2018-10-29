@@ -22,7 +22,8 @@ import android.widget.TextView;
 public class MainActivity extends AppCompatActivity {
     private final static String TAG=MainActivity.class.getSimpleName();
 
-    private boolean isStop=false;
+    private RecorderAndPlayer recorder=null;
+    private RecorderAndPlayer player=null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +81,32 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        final Button buttonStartRecorder=findViewById(R.id.buttonStartRecorder);
+        buttonStartRecorder.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String text=buttonStartRecorder.getText().toString();
+                buttonStartRecorder.setText("开始录音".equals(text)?"停止录音":"开始录音");
+                toggleButtonState1RecorderAndPlayer();
+
+                String receiverIp=((EditText)findViewById(R.id.receiverIp)).getText().toString();
+                String receiverPort=((EditText)findViewById(R.id.receiverPort)).getText().toString();
+                    String androidId = Settings.Secure.getString(getContentResolver(),Settings.Secure.ANDROID_ID);
+                if("开始录音".equals(text)){
+                    recorder=new RecorderAndPlayer(receiverIp,Integer.parseInt(receiverPort),androidId);
+                    try {
+                        recorder.start(true);
+                    } catch (Exception e) {
+                        Log.e(TAG,e.getMessage(),e);
+                    }
+                }else{
+                    if(recorder!=null){
+                        recorder.stop();
+                        recorder=null;
+                    }
+                }
+            }
+        });
 
         final String ip=Utils.getIp(this);
         ((TextView)findViewById(R.id.deviceIP)).setText(ip);
@@ -97,6 +124,15 @@ public class MainActivity extends AppCompatActivity {
         Button buttonTerminate=findViewById(R.id.buttonTerminate);
         buttonStart.setEnabled(!buttonStart.isEnabled());
         buttonTerminate.setEnabled(!buttonTerminate.isEnabled());
+    }
+
+    private void toggleButtonState1RecorderAndPlayer(){
+        Button buttonStartRecorder=findViewById(R.id.buttonStartRecorder);
+        Button buttonStartPlayer=findViewById(R.id.buttonStartPlayer);
+        String buttonStartRecorderCaption=buttonStartRecorder.getText().toString();
+        buttonStartPlayer.setEnabled(!("停止录音".equals(buttonStartRecorderCaption)));
+        String buttonStartPlayerCaption=buttonStartPlayer.getText().toString();
+        buttonStartRecorder.setEnabled(!("停止播音".equals(buttonStartPlayerCaption)));
     }
 
     @Override

@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import io.reactivex.functions.Consumer;
@@ -49,6 +51,7 @@ public class RecorderAndPlayer {
     private MediaDataQueue queue=new MediaDataQueue();
     private HandlerThread handlerThreadPrintQueueSize=null;
     private Handler handlerPrintQueueSize=null;
+    private List<byte[]> sendList=new ArrayList<>();
 
     /**
      *
@@ -80,11 +83,14 @@ public class RecorderAndPlayer {
         this.decoder=new MediaCodecAudioDecoder(sampleRateInHz);
         this.decoder.start();
 
+        SpeexJNI.open(10);
+
 //        final int bufferSize = AudioRecord.getMinBufferSize(
 //                sampleRateInHz,
 //                channelInConfig,
 //                audioFormat);
-        int samples=64;
+        int frameSize=SpeexJNI.getFrameSize();
+        int samples=frameSize*1000/sampleRateInHz;
         final int bufferSize=sampleRateInHz*samples/1000*2;
         if(bufferSize<0){
             String error=String.format("AudioRecord with sampleRate=%s,channelConfig=%s,audioFormat=%s not supported and getMinBufferSize return value is %s",
@@ -98,7 +104,6 @@ public class RecorderAndPlayer {
 //        int audioTrackBufferSize=bufferSize;
 
         SpeexJNI.init(sampleRateInHz*samples/1000,sampleRateInHz);
-        SpeexJNI.open(10);
 
         recorder=new AudioRecord(
                 MediaRecorder.AudioSource.VOICE_COMMUNICATION,
@@ -134,28 +139,28 @@ public class RecorderAndPlayer {
 
         recorder.startRecording();
 
-        while(true) {
-            byte data[] = new byte[bufferSize];
-            int result = recorder.read(data, 0, data.length);
-            if (result < 0) {
-                String error = "AudioRecord error,error code:[" + result + "]";
-                throw new Exception(error);
-            }
-            Object objectReturn[]=encoder.encode(new Object[]{data});
-            if(objectReturn!=null&&objectReturn.length!=0){
-                boolean isBreak=false;
-                for(int i=0;i<objectReturn.length;i++) {
-                    data = (byte[]) objectReturn[i];
-                    if (data != null && data.length == 2) {
-                        ((MediaCodecAudioDecoder) decoder).configCodecSpecificData(data);
-                        isBreak=true;
-                    }
-                }
-                if(isBreak){
-                    break;
-                }
-            }
-        }
+//        while(true) {
+//            byte data[] = new byte[bufferSize];
+//            int result = recorder.read(data, 0, data.length);
+//            if (result < 0) {
+//                String error = "AudioRecord error,error code:[" + result + "]";
+//                throw new Exception(error);
+//            }
+//            Object objectReturn[]=encoder.encode(new Object[]{data});
+//            if(objectReturn!=null&&objectReturn.length!=0){
+//                boolean isBreak=false;
+//                for(int i=0;i<objectReturn.length;i++) {
+//                    data = (byte[]) objectReturn[i];
+//                    if (data != null && data.length == 2) {
+//                        ((MediaCodecAudioDecoder) decoder).configCodecSpecificData(data);
+//                        isBreak=true;
+//                    }
+//                }
+//                if(isBreak){
+//                    break;
+//                }
+//            }
+//        }
 
         if(needAudioSession){
             audioTrack = new AudioTrack(
@@ -239,10 +244,27 @@ public class RecorderAndPlayer {
 
                                     byte encodedData[]=new byte[datas.length*2];
                                     int length=SpeexJNI.encode(datas,encodedData);
-                                    String voiceData = Base64.encodeToString(encodedData,0,length,Base64.DEFAULT);
-                                    JSONObject object = new JSONObject();
-                                    object.put("voiceData", voiceData);
-                                    send("/app/sendVoiceData", object);
+                                    byte []dataTemp=new byte[length];
+                                    System.arraycopy(encodedData,0,dataTemp,0,length);
+                                    sendList.add(dataTemp);
+                                    if(sendList.size()>=3) {
+                                        int allocateLength=0;
+                                        for(int i=0;i<sendList.size();i++){
+                                            allocateLength+=sendList.get(i).length+2;
+                                        }
+                                        ByteBuffer byteBuffer=ByteBuffer.allocate(allocateLength).order(ByteOrder.LITTLE_ENDIAN);
+                                        for(int i=0;i<sendList.size();i++) {
+                                            length=sendList.get(i).length;
+                                            byteBuffer.putShort((short) length);
+                                            byteBuffer.put(sendList.get(i));
+                                        }
+                                        encodedData=byteBuffer.array();
+                                        sendList.clear();
+                                        String voiceData = Base64.encodeToString(encodedData,Base64.DEFAULT);
+                                        JSONObject object = new JSONObject();
+                                        object.put("voiceData", voiceData);
+                                        send("/app/sendVoiceData", object);
+                                    }
 
 //                                    Object objectReturn[]=encoder.encode(new Object[]{bytes});
 //                                    if(objectReturn!=null && objectReturn.length!=0) {
@@ -302,10 +324,19 @@ public class RecorderAndPlayer {
 //                            }
 //                        }
 //                    }
-                    short decodedData[]=new short[bufferSize/2];
-                    int length=SpeexJNI.decode(data,decodedData,data.length);
-                    data=Utils.shortArrayToByteArray(decodedData,0,length);
-                    queue.offer(data);
+
+                    ByteBuffer byteBuffer=ByteBuffer.allocate(data.length).order(ByteOrder.LITTLE_ENDIAN);
+                    byteBuffer.put(data);
+                    byteBuffer.rewind();
+                    while(byteBuffer.hasRemaining()){
+                        short length=byteBuffer.getShort();
+                        byte audioData[]=new byte[length];
+                        byteBuffer.get(audioData);
+                        short decodedData[]=new short[bufferSize/2];
+                        int decodeLength=SpeexJNI.decode(audioData,decodedData,audioData.length);
+                        data=Utils.shortArrayToByteArray(decodedData,0,decodeLength);
+                        queue.offer(data);
+                    }
                 }
             });
 //        }

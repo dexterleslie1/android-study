@@ -57,8 +57,8 @@ JNIEXPORT void JNICALL Java_com_future_android_study_media_SpeexJNI_open
     speex_bits_init(&ebits);
     speex_bits_init(&dbits);
 
-    enc_state = speex_encoder_init(&speex_nb_mode);
-    dec_state = speex_decoder_init(&speex_nb_mode);
+    enc_state = speex_encoder_init(&speex_wb_mode);
+    dec_state = speex_decoder_init(&speex_wb_mode);
     speex_encoder_ctl(enc_state, SPEEX_SET_QUALITY, &quality);
     speex_encoder_ctl(enc_state, SPEEX_GET_FRAME_SIZE, &enc_frame_size);
     speex_decoder_ctl(dec_state, SPEEX_GET_FRAME_SIZE, &dec_frame_size);

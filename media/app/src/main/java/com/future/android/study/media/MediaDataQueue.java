@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
  * @author Dexterleslie.Chan
  */
 public class MediaDataQueue {
-    private BlockingQueue<byte []> queue=new ArrayBlockingQueue<>(20);
+    private BlockingQueue<byte []> queue=new ArrayBlockingQueue<>(50);
 
     /**
      *

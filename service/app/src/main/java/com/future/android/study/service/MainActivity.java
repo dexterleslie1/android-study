@@ -135,10 +135,12 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this,StartAndBindService.class);
+                Intent intent = new Intent(
+                        MainActivity.this.getApplicationContext(),
+                        StartAndBindService.class);
                 MainActivity.this.startService(intent);
 
-                intent = new Intent(MainActivity.this,StartAndBindService.class);
+                intent = new Intent(MainActivity.this.getApplicationContext(),StartAndBindService.class);
                 MainActivity.this.bindService(intent, serviceConnection, Service.BIND_AUTO_CREATE);
             }
         });
@@ -157,7 +159,24 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this,StartAndBindService.class);
+                Intent intent = new Intent(
+                        MainActivity.this.getApplicationContext(),
+                        StartAndBindService.class);
+                MainActivity.this.stopService(intent);
+            }
+        });
+        button = findViewById(R.id.buttonStartAndBindServiceStopAndUnbind);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    MainActivity.this.unbindService(serviceConnection);
+                }catch(Exception ex){
+                    //
+                }
+                Intent intent = new Intent(
+                        MainActivity.this.getApplicationContext(),
+                        StartAndBindService.class);
                 MainActivity.this.stopService(intent);
             }
         });

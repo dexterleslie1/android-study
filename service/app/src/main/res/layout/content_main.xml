@@ -37,4 +37,34 @@
             android:layout_height="wrap_content"
             android:text="Unbind service"/>
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/buttonStartAndBindServiceStart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start and bind service"/>
+        <Button
+            android:id="@+id/buttonStartAndBindServiceUnbind"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Unbind service"/>
+        <Button
+            android:id="@+id/buttonStartAndBindServiceStop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Stop service"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/buttonStartActivity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start activity"/>
+    </LinearLayout>
 </LinearLayout>

@@ -66,7 +66,7 @@ public class FloatingWindowManager {
      */
     public void hide(){
         synchronized (this) {
-            if (this.view != null) {
+            if (this.view != null && this.view.getParent() != null) {
                 windowManager.removeView(this.view);
             }
         }

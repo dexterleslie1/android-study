@@ -20,8 +20,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".SecondActivity"/>
 
         <service android:name="com.future.android.study.service.StartService"/>
         <service android:name="com.future.android.study.service.BindService"/>
+        <service android:name=".StartAndBindService"/>
     </application>
 </manifest>

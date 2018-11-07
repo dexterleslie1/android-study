@@ -1,5 +1,6 @@
 package com.future.android.study.service;
 
+import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -109,6 +110,64 @@ public class MainActivity extends AppCompatActivity {
                 dialogFragment.show(MainActivity.this.getFragmentManager(),"testingDialogFragment");
             }
         });
+
+        button = findViewById(R.id.buttonStartActivity);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this,SecondActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        final ServiceConnection serviceConnection=new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName componentName) {
+
+            }
+        };
+        button = findViewById(R.id.buttonStartAndBindServiceStart);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this,StartAndBindService.class);
+                MainActivity.this.startService(intent);
+
+                intent = new Intent(MainActivity.this,StartAndBindService.class);
+                MainActivity.this.bindService(intent, serviceConnection, Service.BIND_AUTO_CREATE);
+            }
+        });
+        button = findViewById(R.id.buttonStartAndBindServiceUnbind);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    MainActivity.this.unbindService(serviceConnection);
+                }catch(Exception ex){
+                    //
+                }
+            }
+        });
+        button = findViewById(R.id.buttonStartAndBindServiceStop);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this,StartAndBindService.class);
+                MainActivity.this.stopService(intent);
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG,"onDestroy被调用");
+        FloatingWindowManager.getInstance().hide();
     }
 
     @Override

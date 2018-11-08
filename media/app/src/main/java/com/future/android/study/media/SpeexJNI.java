@@ -5,7 +5,7 @@ package com.future.android.study.media;
  */
 public class SpeexJNI {
     static{
-        System.loadLibrary("speexjni");
+        System.loadLibrary("nativejni");
     }
 
     /**

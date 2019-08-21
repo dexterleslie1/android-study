@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.future.study.android.qrcodebarcode.MainActivity"
+    tools:showIn="@layout/activity_main"
+    android:orientation="vertical"
+    android:gravity="center_horizontal">
+    <Button
+        android:id="@+id/buttonScan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="扫一扫"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center">
+        <EditText
+            android:id="@+id/editTextQRCode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="填入生成二维码字符串"/>
+        <Button
+            android:id="@+id/buttonGenerate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="生成二维码"/>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <ImageView
+            android:id="@+id/imageViewQRCode"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </LinearLayout>
+</LinearLayout>

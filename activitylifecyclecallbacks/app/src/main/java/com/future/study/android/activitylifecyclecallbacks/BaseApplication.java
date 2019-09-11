@@ -22,13 +22,17 @@ public class BaseApplication extends Application implements Application.Activity
     @Override
     public void onActivityStarted(Activity activity) {
         this.activityCount++;
-        Log.i(TAG, "onActivityStarted activity count:" + activityCount);
+        boolean changingConfigurations = activity.isChangingConfigurations();
+        String message = String.format("changingConfigurations %s onActivityStarted activity count: %d", changingConfigurations, activityCount);
+        Log.i(TAG, message);
     }
 
     @Override
     public void onActivityStopped(Activity activity) {
         this.activityCount--;
-        Log.i(TAG, "onActivityStopped activity count:" + activityCount);
+        boolean changingConfigurations = activity.isChangingConfigurations();
+        String message = String.format("changingConfigurations %s onActivityStopped activity count: %d", changingConfigurations, activityCount);
+        Log.i(TAG, message);
     }
 
     @Override

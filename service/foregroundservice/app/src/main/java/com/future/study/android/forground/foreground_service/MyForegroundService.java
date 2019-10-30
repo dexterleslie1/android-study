@@ -1,18 +1,27 @@
 package com.future.study.android.forground.foreground_service;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
+import java.util.Date;
+
 public class MyForegroundService extends Service {
+    private final static String TAG = MyForegroundService.class.getSimpleName();
+
     private static final String TAG_FOREGROUND_SERVICE = "FOREGROUND_SERVICE";
 
     public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
@@ -22,6 +31,9 @@ public class MyForegroundService extends Service {
     public static final String ACTION_PAUSE = "ACTION_PAUSE";
 
     public static final String ACTION_PLAY = "ACTION_PLAY";
+
+    private boolean isStop = false;
+    private Handler handler = new Handler();
 
     public MyForegroundService() {
     }
@@ -36,6 +48,24 @@ public class MyForegroundService extends Service {
     public void onCreate() {
         super.onCreate();
         Log.d(TAG_FOREGROUND_SERVICE, "My foreground service onCreate().");
+
+        displayCurrentTime();
+    }
+
+    private void displayCurrentTime() {
+        if(isStop) {
+            return;
+        }
+
+        Date date = new Date();
+        Log.i(TAG, "Current time is " + date);
+
+        this.handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                displayCurrentTime();
+            }
+        }, 1000);
     }
 
     @Override
@@ -65,6 +95,13 @@ public class MyForegroundService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        isStop = true;
+    }
+
     /* Used to build and start foreground service. */
     private void startForegroundService()
     {
@@ -74,8 +111,9 @@ public class MyForegroundService extends Service {
         Intent intent = new Intent();
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
 
+        String channelId = "testChannel";
         // Create notification builder.
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId);
 
         // Make notification show big text.
         NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
@@ -109,6 +147,12 @@ public class MyForegroundService extends Service {
 
         // Build the notification.
         Notification notification = builder.build();
+
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) {
+            NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationChannel notificationChannel = new NotificationChannel(channelId, "channelName", NotificationManager.IMPORTANCE_HIGH);
+            notificationManager.createNotificationChannel(notificationChannel);
+        }
 
         // Start foreground service.
         startForeground(1, notification);

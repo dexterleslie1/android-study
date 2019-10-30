@@ -1,6 +1,7 @@
 package com.future.study.android.forground.foreground_service;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -38,7 +39,11 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, MyForegroundService.class);
                 intent.setAction(MyForegroundService.ACTION_START_FOREGROUND_SERVICE);
-                startService(intent);
+                if(Build.VERSION.SDK_INT<Build.VERSION_CODES.O) {
+                    startService(intent);
+                } else {
+                    startForegroundService(intent);
+                }
             }
         });
 

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context=".MainActivity"
+    tools:showIn="@layout/activity_main"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/buttonStartService"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Start service"/>
+    <Button
+        android:id="@+id/buttonBindService"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Bind service"/>
+    <Button
+        android:id="@+id/buttonUnbindService"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Unbind service"/>
+    <Button
+        android:id="@+id/buttonStopService"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Stop service"/>
+    <Button
+        android:id="@+id/buttonCallServiceMethod"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Call service method getCurrentTime()"/>
+</LinearLayout>

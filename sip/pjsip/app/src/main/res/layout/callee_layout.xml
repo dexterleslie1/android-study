@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="9"
+        android:gravity="center_vertical|center_horizontal">
+        <LinearLayout
+            android:id="@+id/panel1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="来电" />
+            <TextView
+                android:id="@+id/textViewCaller"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1003"
+                android:layout_marginLeft="5dp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="..."
+                android:layout_marginLeft="5dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/panel2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="已接通，正在通话中..."/>
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical|center_horizontal">
+        <Button
+            android:id="@+id/buttonCalleeReject"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="挂断"/>
+        <Button
+            android:id="@+id/buttonCalleeAccept"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="接听"/>
+    </LinearLayout>
+</LinearLayout>

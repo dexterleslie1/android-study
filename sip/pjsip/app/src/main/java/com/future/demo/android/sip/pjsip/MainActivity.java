@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
                     accountConfig.getRegConfig().setRegistrarUri("sip:" + sipHost + ":" + sipPort);
                     AuthCredInfo authCredInfo = new AuthCredInfo("digest", "*", sipAccount, 0, sipAccountPassword);
                     accountConfig.getSipConfig().getAuthCreds().add(authCredInfo);
-                    accountConfig.getNatConfig().setIceEnabled(true);
+//                    accountConfig.getNatConfig().setIceEnabled(true);
                     AccountExt account = new AccountExt(MainActivity.this);
                     account.create(accountConfig);
                     GlobalReference.accountExt = account;

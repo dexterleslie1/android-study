@@ -3,7 +3,6 @@ package com.future.demo.android.sip.pjsip;
 import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -13,7 +12,6 @@ import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import android.text.TextUtils;
 import android.util.Log;
@@ -28,6 +26,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.pjsip.pjsua2.AccountConfig;
+import org.pjsip.pjsua2.AccountInfo;
 import org.pjsip.pjsua2.AuthCredInfo;
 import org.pjsip.pjsua2.Endpoint;
 import org.pjsip.pjsua2.EpConfig;
@@ -36,6 +35,8 @@ import org.pjsip.pjsua2.StringVector;
 import org.pjsip.pjsua2.TransportConfig;
 import org.pjsip.pjsua2.UaConfig;
 import org.pjsip.pjsua2.pjsip_transport_type_e;
+
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = MainActivity.class.getSimpleName();
@@ -103,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
                     AccountConfig accountConfig = new AccountConfig();
                     String idUri = String.format("sip:%s@%s", sipAccount, sipHost + ":" + sipPort);
                     accountConfig.setIdUri(idUri);
-
                     accountConfig.getRegConfig().setRegistrarUri("sip:" + sipHost + ":" + sipPort);
                     AuthCredInfo authCredInfo = new AuthCredInfo("digest", "*", sipAccount, 0, sipAccountPassword);
                     accountConfig.getSipConfig().getAuthCreds().add(authCredInfo);
@@ -162,6 +162,41 @@ public class MainActivity extends AppCompatActivity {
                     EventBus.getDefault().post(event);
                 } catch (Exception ex) {
                     Log.e(TAG, ex.getMessage(), ex);
+                }
+            }
+        });
+
+        button = findViewById(R.id.buttonLoginStatus);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(GlobalReference.accountExt != null) {
+                    try {
+                        AccountInfo accountInfo = GlobalReference.accountExt.getInfo();
+                        String message = new Date() + ": onlineStatus=" + accountInfo.getOnlineStatus();
+                        message += ",onlineStatusText=" + accountInfo.getOnlineStatusText();
+                        message += ",regStatus=" + accountInfo.getRegStatus();
+                        message += ",regStatusText=" + accountInfo.getRegStatusText();
+                        message += ",regIsActive=" + accountInfo.getRegIsActive();
+                        Log.i(TAG, message);
+                    } catch (Exception e) {
+                        Log.e(TAG, e.getMessage(), e);
+                    }
+                }
+            }
+        });
+
+        button = findViewById(R.id.buttonRelogin);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(GlobalReference.accountExt != null) {
+                    try {
+                        GlobalReference.accountExt.setRegistration(true);
+                        Log.i(TAG, "重新登录请求已发出");
+                    } catch (Exception e) {
+                        Log.e(TAG, e.getMessage(), e);
+                    }
                 }
             }
         });

@@ -86,4 +86,19 @@
             android:layout_height="wrap_content"
             android:text="拨打"/>
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/buttonLoginStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="获取SIP登录状态"/>
+        <Button
+            android:id="@+id/buttonRelogin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="重新登录"/>
+    </LinearLayout>
 </LinearLayout>

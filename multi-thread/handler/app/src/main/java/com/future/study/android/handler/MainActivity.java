@@ -7,6 +7,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,17 +15,19 @@ import android.widget.Button;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
+    private final static String TAG = MainActivity.class.getSimpleName();
+
     private int counter = 0;
     private int counter2 = 0;
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            counter++;
-            TextView textView1 = findViewById(R.id.textView1);
-            textView1.setText("点击第" + counter + "次");
-        }
-    };
-    private Handler handler2 = new Handler();
+
+    /**
+     * 主线程handler
+     */
+    private Handler handlerMain = null;
+    /**
+     * 子线程handler
+     */
+    private Handler handlerSubThread = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,11 +45,34 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        handlerMain = new Handler();
+
+        ThreadSub threadSub = new ThreadSub();
+        threadSub.start();
+        try {
+            // 等待handlerSubThread的looper准备完毕
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            //
+        }
+        handlerSubThread = new Handler(threadSub.getLooper());
+
         Button button = findViewById(R.id.button1);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                handler.sendEmptyMessage(0);
+                handlerMain.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        String threadName = Thread.currentThread().getName();
+                        Log.i(TAG, "当前线程：" + threadName);
+
+                        counter++;
+                        TextView textView = findViewById(R.id.textView1);
+                        textView.setText("点击第" + counter + "次");
+
+                    }
+                });
             }
         });
 
@@ -54,17 +80,20 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                handler2.post(new Runnable() {
+                handlerSubThread.post(new Runnable() {
                     @Override
                     public void run() {
-                        try {
-                            Thread.sleep(5000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        counter2++;
-                        TextView textView2 = findViewById(R.id.textView2);
-                        textView2.setText("点击第" + counter2 + "次");;
+                        String threadName = Thread.currentThread().getName();
+                        Log.i(TAG, "当前线程：" + threadName);
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                counter2++;
+                                TextView textView2 = findViewById(R.id.textView2);
+                                textView2.setText("点击第" + counter2 + "次");
+                            }
+                        });
                     }
                 });
             }

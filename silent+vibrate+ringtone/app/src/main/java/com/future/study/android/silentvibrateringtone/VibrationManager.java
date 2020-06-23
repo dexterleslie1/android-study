@@ -55,9 +55,9 @@ public class VibrationManager {
             this.handlerThread = new HandlerThread("thread-vibration-manager");
             this.handlerThread.start();
             this.handler = new Handler(this.handlerThread.getLooper());
-            this.handler.post(new Runnable() {
-                @Override
-                public void run() {
+//            this.handler.post(new Runnable() {
+//                @Override
+//                public void run() {
                     Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
                     if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         VibrationEffect vibrationEffect = VibrationEffect.createWaveform(new long[] {1000,1000,1000,1000}, 0);
@@ -65,8 +65,8 @@ public class VibrationManager {
                     }else{
                         vibrator.vibrate(new long[]{1000,1000,1000,1000},0);
                     }
-                }
-            });
+//                }
+//            });
             this.handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {

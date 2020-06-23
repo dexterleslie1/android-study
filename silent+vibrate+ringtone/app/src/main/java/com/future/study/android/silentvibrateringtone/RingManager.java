@@ -58,9 +58,9 @@ public class RingManager {
             this.handlerThread = new HandlerThread("thread-vibration-manager");
             this.handlerThread.start();
             this.handler = new Handler(this.handlerThread.getLooper());
-            this.handler.post(new Runnable() {
-                @Override
-                public void run() {
+//            this.handler.post(new Runnable() {
+//                @Override
+//                public void run() {
                     if(ringtone==null) {
                         Uri uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALL);
                         if(uri!=null) {
@@ -70,8 +70,8 @@ public class RingManager {
                             }
                         }
                     }
-                }
-            });
+//                }
+//            });
             this.handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {

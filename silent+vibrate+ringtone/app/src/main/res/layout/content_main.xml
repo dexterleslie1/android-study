@@ -13,12 +13,22 @@
         android:id="@+id/buttonStartRingtone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Start ring tone"/>
+        android:text="开始播放铃声"/>
 
     <Button
         android:id="@+id/buttonStopRingtone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Stop ring tone"/>
+        android:text="停止播放铃声"/>
 
+    <Button
+        android:id="@+id/buttonStartVibration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="开始震动"/>
+    <Button
+        android:id="@+id/buttonStopVibration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="停止震动"/>
 </LinearLayout>

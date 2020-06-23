@@ -7,13 +7,18 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.util.Date;
+
 public class MainActivity extends AppCompatActivity {
+    private final static String TAG = MainActivity.class.getSimpleName();
+
     private Handler handler = null;
     private HandlerThread handlerThread = null;
 
@@ -81,6 +86,15 @@ public class MainActivity extends AppCompatActivity {
                         });
                     }
                 });
+            }
+        });
+
+        button = findViewById(R.id.button2);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Date currentTime = new Date();
+                Log.i(TAG, currentTime + " APP没有被卡住");
             }
         });
     }

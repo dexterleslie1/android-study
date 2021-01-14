@@ -30,13 +30,18 @@ import org.pjsip.pjsua2.AccountInfo;
 import org.pjsip.pjsua2.AuthCredInfo;
 import org.pjsip.pjsua2.Endpoint;
 import org.pjsip.pjsua2.EpConfig;
+import org.pjsip.pjsua2.LogEntry;
+import org.pjsip.pjsua2.LogWriter;
 import org.pjsip.pjsua2.OnRegStateParam;
+import org.pjsip.pjsua2.SipHeader;
 import org.pjsip.pjsua2.StringVector;
 import org.pjsip.pjsua2.TransportConfig;
 import org.pjsip.pjsua2.UaConfig;
+import org.pjsip.pjsua2.pj_log_decoration;
 import org.pjsip.pjsua2.pjsip_transport_type_e;
 
 import java.util.Date;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = MainActivity.class.getSimpleName();
@@ -48,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private final static String SharedPreferencesKeySipCallee = "sipCallee";
 
     private final static String PjsuaLibrary = "pjsua2";
+    private static LogWriter logWriter = null;
 
     private Endpoint endpoint = null;
 
@@ -55,6 +61,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        SharedPreferencesManager.getInstance().init(getApplicationContext());
+
+        // 唯一一次生成全局sip instanceId，提供以后设备唯一标识
+        if(SharedPreferencesManager.getInstance().getString("sipData", "sipInstanceId")==null) {
+            String uuid = UUID.randomUUID().toString();
+            SharedPreferencesManager.getInstance().putString("sipData", "sipInstanceId", uuid);
+        }
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -67,13 +82,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) {
-//            int result = ContextCompat.checkSelfPermission(
-//                    this, Manifest.permission.INTERNET | Manifest.permission.RECORD_AUDIO);
-//            if(result!= PackageManager.PERMISSION_GRANTED) {
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.N) {
                 ActivityCompat.requestPermissions(
-                        this, new String[]{Manifest.permission.INTERNET,Manifest.permission.RECORD_AUDIO}, 200);
-//            }
+                        this, new String[]{
+                                Manifest.permission.INTERNET,
+                                Manifest.permission.RECORD_AUDIO}, 200);
         }
 
         EventBus.getDefault().register(this);
@@ -104,10 +117,21 @@ public class MainActivity extends AppCompatActivity {
                     AccountConfig accountConfig = new AccountConfig();
                     String idUri = String.format("sip:%s@%s", sipAccount, sipHost + ":" + sipPort);
                     accountConfig.setIdUri(idUri);
+                    // 自动60秒sip客户端超时
+                    accountConfig.getRegConfig().setTimeoutSec(300);
                     accountConfig.getRegConfig().setRegistrarUri("sip:" + sipHost + ":" + sipPort);
                     AuthCredInfo authCredInfo = new AuthCredInfo("digest", "*", sipAccount, 0, sipAccountPassword);
                     accountConfig.getSipConfig().getAuthCreds().add(authCredInfo);
 //                    accountConfig.getNatConfig().setIceEnabled(true);
+//                    accountConfig.getNatConfig().setTurnEnabled(false);
+//                    accountConfig.getNatConfig().setMediaStunUse(1);
+//                    accountConfig.getNatConfig().setSipOutboundUse(0);
+                    String sipInstanceId = SharedPreferencesManager.getInstance().getString("sipData", "sipInstanceId");
+                    String contactWithInstanceId = String.format(";+sip.instance=\"<urn:uuid:%s>\"", sipInstanceId);
+                    accountConfig.getSipConfig().setContactParams(contactWithInstanceId);
+                    // 不允许SipALG修改协议via头
+                    accountConfig.getNatConfig().setViaRewriteUse(0);
+
                     AccountExt account = new AccountExt(MainActivity.this);
                     account.create(accountConfig);
                     GlobalReference.accountExt = account;
@@ -229,13 +253,17 @@ public class MainActivity extends AppCompatActivity {
             this.endpoint.libCreate();
 
             EpConfig epConfig = new EpConfig();
-//            epConfig.getLogConfig().setLevel(5);
-            epConfig.getUaConfig().setMaxCalls(1);
+            epConfig.getLogConfig().setLevel(5);
+            epConfig.getLogConfig().setConsoleLevel(4);
+            epConfig.getLogConfig().setMsgLogging(1);
+            logWriter = new SipLogWriter();
+            epConfig.getLogConfig().setWriter(logWriter);
+            epConfig.getLogConfig().setDecor(epConfig.getLogConfig().getDecor() & ~(pj_log_decoration.PJ_LOG_HAS_CR | pj_log_decoration.PJ_LOG_HAS_NEWLINE));
             UaConfig uaConfig = epConfig.getUaConfig();
             uaConfig.setUserAgent("Pjsua2 Android " + endpoint.libVersion().getFull());
-            StringVector stunServers = new StringVector();
-            stunServers.add("stun.pjsip.org");
-            uaConfig.setStunServer(stunServers);
+//            StringVector stunServers = new StringVector();
+//            stunServers.add("stun.pjsip.org");
+//            uaConfig.setStunServer(stunServers);
             endpoint.libInit(epConfig);
 
             TransportConfig transportConfig = new TransportConfig();
@@ -245,9 +273,26 @@ public class MainActivity extends AppCompatActivity {
 
             endpoint.libStart();
 
+            endpoint.codecSetPriority("PCMA/8000", (short) (CodecPriority.PRIORITY_DISABLED));
+            endpoint.codecSetPriority("PCMU/8000", (short) (CodecPriority.PRIORITY_DISABLED));
+            endpoint.codecSetPriority("speex/8000", (short) CodecPriority.PRIORITY_DISABLED);
+            endpoint.codecSetPriority("speex/16000", (short) CodecPriority.PRIORITY_DISABLED);
+            endpoint.codecSetPriority("speex/32000", (short) CodecPriority.PRIORITY_DISABLED);
+            endpoint.codecSetPriority("GSM/8000", (short) CodecPriority.PRIORITY_DISABLED);
+            endpoint.codecSetPriority("G722/16000", (short) (CodecPriority.PRIORITY_DISABLED));
+            endpoint.codecSetPriority("ilbc/8000", (short) CodecPriority.PRIORITY_DISABLED);
+            endpoint.codecSetPriority("G729/8000", (short) (CodecPriority.PRIORITY_MAX));
+
             Log.i(TAG, PjsuaLibrary + "已启动");
         } catch (Exception ex) {
             Log.e(TAG, ex.getMessage(), ex);
+        }
+    }
+
+    public class SipLogWriter extends LogWriter {
+        @Override
+        public void write(LogEntry entry) {
+            Log.d(TAG, getClass().getSimpleName() + " " + entry.getMsg());
         }
     }
 

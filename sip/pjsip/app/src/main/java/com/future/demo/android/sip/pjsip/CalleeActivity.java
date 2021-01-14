@@ -34,8 +34,8 @@ public class CalleeActivity extends AppCompatActivity {
                 Log.e(TAG, e.getMessage(), e);
             }
         }
-        TextView textViewCaller = findViewById(R.id.textViewCaller);
-        textViewCaller.setText(caller);
+        TextView textViewCaller = findViewById(R.id.textViewInfo);
+        textViewCaller.setText("来自 " + caller + " 呼叫...");
 
         // 挂断
         Button button = findViewById(R.id.buttonCalleeReject);
@@ -43,6 +43,7 @@ public class CalleeActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
+//                    callExt.declineWithBusy();
                     callExt.hangup();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -61,6 +62,17 @@ public class CalleeActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+
+                if(callExt!=null) {
+                    try {
+                        String caller = callExt.getInfo().getRemoteUri();
+                        TextView textViewCaller = findViewById(R.id.textViewInfo);
+                        textViewCaller.setText("正在与 " + caller + " 通话中...");
+                    } catch (Exception e) {
+                        Log.e(TAG, e.getMessage(), e);
+                    }
+                }
+
                 v.setVisibility(View.GONE);
             }
         });

@@ -7,26 +7,10 @@
         android:layout_height="0dp"
         android:layout_weight="9"
         android:gravity="center_vertical|center_horizontal">
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
             <TextView
+                android:id="@+id/textViewInfo"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:text="正在呼叫" />
-            <TextView
-                android:id="@+id/textViewCallee"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="1003"
-                android:layout_marginLeft="5dp"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:text="..."
-                android:layout_marginLeft="5dp"/>
-        </LinearLayout>
+                android:layout_height="wrap_content" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"

@@ -27,7 +27,8 @@ public class CallerActivity extends AppCompatActivity {
         setContentView(R.layout.caller_layout);
         EventBus.getDefault().register(this);
 
-        ((TextView)findViewById(R.id.textViewCallee)).setText(getIntent().getStringExtra("callee"));
+        TextView textViewInfo = findViewById(R.id.textViewInfo);
+        textViewInfo.setText("尝试呼叫 " + getIntent().getStringExtra("callee") + " 中...");
 
         Button button = findViewById(R.id.buttonCallerCancel);
         button.setOnClickListener(new View.OnClickListener() {
@@ -64,5 +65,7 @@ public class CallerActivity extends AppCompatActivity {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void callAcceptEvent(CallAcceptEvent event) {
         ((Button)findViewById(R.id.buttonCallerCancel)).setText("挂断");
+        TextView textViewInfo = findViewById(R.id.textViewInfo);
+        textViewInfo.setText("正在与 " + getIntent().getStringExtra("callee") + " 通话中...");
     }
 }

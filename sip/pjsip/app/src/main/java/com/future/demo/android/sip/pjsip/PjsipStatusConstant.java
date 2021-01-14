@@ -7,7 +7,7 @@ import org.pjsip.pjsua2.pjsip_status_code;
 
 public class PjsipStatusConstant {
 
-    public static String getCallStatusTextByStatusCode(pjsip_status_code statusCode, CallInfo callInfo){
+    public static String getCallStatusTextByStatusCode(int statusCode, CallInfo callInfo){
         String statusText = null;
         String reason = callInfo==null?"":callInfo.getLastReason();
         if(!TextUtils.isEmpty(reason)) {
@@ -34,7 +34,7 @@ public class PjsipStatusConstant {
         return statusText;
     }
 
-    public static String getLoginStatusTextByStatusCode(pjsip_status_code statusCode){
+    public static String getLoginStatusTextByStatusCode(int statusCode){
         String statusText = "未知状态";
         if(statusCode== pjsip_status_code.PJSIP_SC_FORBIDDEN)
             statusText="账号或密码错误";

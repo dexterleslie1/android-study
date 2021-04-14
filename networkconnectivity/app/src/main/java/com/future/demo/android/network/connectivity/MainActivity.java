@@ -9,23 +9,33 @@ import android.os.Bundle;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements Handler.Callback{
     private final static String TAG = MainActivity.class.getSimpleName();
 
+    public static Handler HANDLER;
     private NetworkChangedReceiver networkChangedReceiver = null;
+
+    private TextView textView1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        HANDLER = new Handler(this);
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -57,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
         this.networkChangedReceiver = new NetworkChangedReceiver(getBaseContext());
         IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(this.networkChangedReceiver, intentFilter);
+
+        textView1 = findViewById(R.id.textView1);
     }
 
     @Override
@@ -88,5 +100,16 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean handleMessage(@NonNull Message msg) {
+        int what = msg.what;
+        if(what==1) {
+            String message = (String)msg.obj;
+            textView1.append(message);
+            textView1.append("\n");
+        }
+        return true;
     }
 }

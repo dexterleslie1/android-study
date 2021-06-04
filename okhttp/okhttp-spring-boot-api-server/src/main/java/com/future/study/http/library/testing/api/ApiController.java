@@ -1,12 +1,12 @@
 package com.future.study.http.library.testing.api;
 
+import com.yyd.common.http.response.ObjectResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.log4j.Logger;
-import org.apache.tomcat.util.http.fileupload.MultipartStream;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,10 +19,26 @@ import java.util.*;
 /**
  * @author Dexterleslie.Chan
  */
+@Slf4j
 @RestController
 @RequestMapping(value="/http/library/api")
 public class ApiController {
     private final static Logger logger= Logger.getLogger(ApiController.class);
+
+    @GetMapping("getWithHeaderAndQueryParamter")
+    public ResponseEntity<String> getWithHeaderAndQueryParamter(
+            @RequestHeader("customHeader") String customHeader,
+            @RequestParam("username") String username) {
+        log.info("customHeader={},username={}", customHeader, username);
+        return ResponseEntity.ok("你好," + username);
+    }
+
+    @GetMapping("getWithObjectResponse")
+    public ObjectResponse<String> getWithObjectResponse() {
+        ObjectResponse<String> response = new ObjectResponse<>();
+        response.setData("调用成功");
+        return response;
+    }
 
     /**
      *
